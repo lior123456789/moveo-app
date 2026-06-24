@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Moveo — Move better. Together.</title>
+<style>
+:root{--v:#6c4dff;--v2:#8a6dff;--vl:#f1eeff;--ink:#15171e;--mute:#8b91a3;--line:#eef0f5;--bg:#f6f7fb;--green:#27c498;--red:#ff5a5f}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:#0e0f14;color:var(--ink);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:16px}
+.phone{width:390px;max-width:100vw;height:844px;max-height:96vh;background:var(--bg);border-radius:44px;overflow:hidden;position:relative;box-shadow:0 40px 100px rgba(0,0,0,.5);border:10px solid #000}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:50}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 6px;font-size:13px;font-weight:700}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;animation:slide .35s ease}
+.screen.on{display:flex}
+@keyframes slide{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.body{flex:1;overflow-y:auto;padding:6px 22px 22px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo .m{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--v),var(--v2));display:grid;place-items:center;color:#fff;font-weight:900}
+.hi{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:18px 0 4px}
+.hi small{font-size:14px;color:var(--mute);font-weight:600;display:block;margin-top:4px}
+.search{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin:18px 0 6px;box-shadow:0 6px 18px rgba(20,23,30,.04)}
+.search input{border:0;outline:0;flex:1;font-size:16px;background:transparent}
+.search .pin{color:var(--v)}
+.quick{display:flex;gap:10px;margin:14px 0 4px}
+.q{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+.q .i{font-size:18px}.q .t{font-size:12px;font-weight:700;margin-top:3px}.q .s{font-size:11px;color:var(--mute)}
+.sec{font-size:13px;font-weight:800;color:var(--ink);margin:22px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.sec a{color:var(--v);font-size:12px;font-weight:700}
+.ride{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:13px 15px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.ride.sel{border-color:var(--v);background:var(--vl)}
+.ride .ic{font-size:26px;width:38px;text-align:center}
+.ride .nm{font-weight:700;font-size:15px}.ride .eta{font-size:12px;color:var(--mute)}
+.ride .pr{margin-left:auto;font-weight:800;font-size:16px}
+.ride .chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:12px}
+.ride.sel .chk{background:var(--v);border-color:var(--v)}
+.pass{background:linear-gradient(135deg,#efeaff,#f6f3ff);border:1px solid #e3dbff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:10px;margin-top:6px}
+.pass .c{font-size:22px}.pass b{font-size:14px}.pass p{font-size:12px;color:var(--v);font-weight:700}
+.cta{position:absolute;left:22px;right:22px;bottom:30px;background:var(--v);color:#fff;border:0;border-radius:18px;padding:18px;font-size:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;cursor:pointer;box-shadow:0 14px 30px rgba(108,77,255,.4)}
+.cta:active{transform:scale(.99)}
+.cta.red{background:var(--red);box-shadow:0 14px 30px rgba(255,90,95,.35);justify-content:center}
+.tabbar{display:flex;justify-content:space-around;padding:12px 0 22px;background:#fff;border-top:1px solid var(--line)}
+.tabbar .tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--mute)}
+.tabbar .tb.on{color:var(--v)}
+.tabbar .tb .i{font-size:18px}
+/* map */
+.map{height:55%;background:linear-gradient(160deg,#eef1f8,#e7ecf6);position:relative;overflow:hidden}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.route{fill:none;stroke:var(--v);stroke-width:5;stroke-linecap:round;stroke-dasharray:8 10;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-18}}
+.car{position:absolute;font-size:26px;animation:drive 6s ease-in-out infinite}
+@keyframes drive{0%{top:62%;left:18%}50%{top:30%;left:55%}100%{top:62%;left:18%}}
+.pin1,.pin2{position:absolute;font-size:24px}
+.card{background:#fff;border-radius:24px 24px 0 0;margin-top:-26px;position:relative;padding:20px 22px;flex:1;box-shadow:0 -10px 30px rgba(20,23,30,.06)}
+.driver{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:16px;margin-bottom:14px}
+.driver .av{width:46px;height:46px;border-radius:50%;background:var(--vl);display:grid;place-items:center;font-size:22px}
+.driver .nm{font-weight:800}.driver .car2{font-size:12px;color:var(--mute)}
+.driver .rt{margin-left:auto;font-weight:800;color:#f0a500}
+.iconbtn{width:42px;height:42px;border-radius:50%;background:var(--vl);color:var(--v);display:grid;place-items:center;font-size:18px}
+.locrow{display:flex;gap:12px;align-items:flex-start;padding:10px 0}
+.locrow .d{width:10px;height:10px;border-radius:50%;margin-top:5px}
+.locrow .lbl{font-size:11px;color:var(--mute);font-weight:700}.locrow .val{font-size:14px;font-weight:600}
+.fare{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-top:1px solid var(--line);margin-top:6px}
+.fare .big{font-size:24px;font-weight:800}
+.pay{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:8px 0}
+.center{text-align:center;padding:30px 24px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.center .big{font-size:30px;font-weight:800;margin:14px 0 6px}
+.stars{font-size:30px;color:#f0a500;letter-spacing:6px}
+.done{width:90px;height:90px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-size:46px;color:#fff;margin-bottom:6px}
+.back{position:absolute;top:54px;left:18px;width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:18px;z-index:30;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- HOME -->
+  <section class="screen on" id="s-home">
+    <div class="statusbar"><span>9:41</span><span>● ▮▮▮ 🔋</span></div>
+    <div class="body">
+      <div class="logo"><span class="m">M</span>Moveo</div>
+      <div class="hi">Hello, Alex 👋<small>Where are you going?</small></div>
+      <div class="search"><span class="pin">◎</span><input id="dest" placeholder="Enter destination" value=""></div>
+      <div class="quick">
+        <div class="q" onclick="setDest('Home')"><div class="i">🏠</div><div class="t">Home</div><div class="s">12 min</div></div>
+        <div class="q" onclick="setDest('Work')"><div class="i">💼</div><div class="t">Work</div><div class="s">25 min</div></div>
+        <div class="q" onclick="setDest('Airport')"><div class="i">✈️</div><div class="t">Airport</div><div class="s">45 min</div></div>
+        <div class="q" onclick="setDest('')"><div class="i">＋</div><div class="t">Add</div><div class="s">&nbsp;</div></div>
+      </div>
+      <div class="sec">Choose a ride <a>See all</a></div>
+      <div id="rides"></div>
+      <div class="pass"><span class="c">👑</span><div><b>Moveo Pass</b><p>Save up to 20% on every ride · Join now ›</p></div></div>
+      <div style="height:90px"></div>
+    </div>
+    <button class="cta" onclick="goConfirm()"><span id="homeCta">Confirm Economy</span><span id="homePrice">$12.50</span></button>
+  </section>
+
+  <!-- CONFIRM / MAP -->
+  <section class="screen" id="s-confirm">
+    <div class="back" onclick="show('s-home')">‹</div>
+    <div class="statusbar"><span>9:41</span><span>● ▮▮▮ 🔋</span></div>
+    <div class="map">
+      <svg viewBox="0 0 390 460" preserveAspectRatio="none">
+        <path class="route" d="M70 290 C 140 250, 180 160, 215 140 S 300 120, 320 90"/>
+      </svg>
+      <span class="pin1" style="left:60px;top:268px">📍</span>
+      <span class="pin2" style="left:308px;top:66px">🏁</span>
+      <span class="car">🚗</span>
+    </div>
+    <div class="card">
+      <div class="locrow"><div class="d" style="background:var(--v)"></div><div><div class="lbl">PICKUP</div><div class="val">120 Maple St, Miami</div></div></div>
+      <div class="locrow"><div class="d" style="background:var(--red)"></div><div><div class="lbl">DROP-OFF</div><div class="val" id="dropoff">456 Ocean Dr, Miami</div></div></div>
+      <div class="pay"><span>💳</span><div style="flex:1"><b style="font-size:14px">Visa •••• 4242</b></div><span style="color:var(--v);font-weight:700;font-size:13px">Change</span></div>
+      <div class="fare"><span style="color:var(--mute);font-weight:700">Total fare</span><span class="big" id="confirmPrice">$12.50</span></div>
+    </div>
+    <button class="cta" onclick="payRide()"><span id="payBtn">Confirm & Pay</span><span id="payPrice">$12.50</span></button>
+  </section>
+
+  <!-- EN ROUTE -->
+  <section class="screen" id="s-route">
+    <div class="statusbar"><span>9:41</span><span>● ▮▮▮ 🔋</span></div>
+    <div style="padding:16px 22px"><b style="font-size:13px;color:var(--mute)">🚗 EN ROUTE</b><div style="font-size:18px;font-weight:800">Arriving in 4 min</div></div>
+    <div class="map" style="height:42%">
+      <svg viewBox="0 0 390 360" preserveAspectRatio="none"><path class="route" d="M70 240 C 160 200, 200 120, 320 70"/></svg>
+      <span class="pin2" style="left:308px;top:48px">🏁</span><span class="car">🚗</span>
+    </div>
+    <div class="card">
+      <div class="driver"><div class="av">👨</div><div><div class="nm">John D.</div><div class="car2">Tesla Model 3 · ABC123</div></div><div class="rt">★ 4.9</div></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div class="iconbtn">📞</div><div class="iconbtn">💬</div>
+        <div style="flex:1"></div>
+        <div class="iconbtn" style="background:#ffecec;color:var(--red)">🛡️</div>
+      </div>
+      <div style="font-size:12px;color:var(--mute);text-align:center">Share your trip · Live location · SOS</div>
+    </div>
+    <button class="cta red" onclick="finishRide()">Simulate arrival ▸</button>
+  </section>
+
+  <!-- RATE / DONE -->
+  <section class="screen" id="s-done">
+    <div class="statusbar"><span>9:41</span><span>● ▮▮▮ 🔋</span></div>
+    <div class="center">
+      <div class="done">✓</div>
+      <div class="big">You've arrived!</div>
+      <div style="color:var(--mute);font-weight:600" id="paidLine">Payment complete</div>
+      <div style="margin:26px 0 6px;font-weight:700">Rate your ride with John</div>
+      <div class="stars">★★★★★</div>
+      <button class="cta" style="position:static;margin-top:30px" onclick="show('s-home')"><span>Done</span><span>🏠</span></button>
+    </div>
+  </section>
+</div>
+
+<script>
+var BACKEND = "https://tablo-backend.onrender.com";
+var RIDES = [
+  {id:'eco', ic:'🚗', nm:'Economy', eta:'4 min away', price:12.50},
+  {id:'xl',  ic:'🚙', nm:'XL',      eta:'6 min away', price:18.80},
+  {id:'grn', ic:'🌿', nm:'Green',   eta:'5 min away', price:13.20},
+  {id:'shr', ic:'👥', nm:'Share',   eta:'7 min away', price:8.40},
+];
+var sel = RIDES[0];
+function money(n){return '$'+n.toFixed(2);}
+function renderRides(){
+  document.getElementById('rides').innerHTML = RIDES.map(function(r){
+    return '<div class="ride '+(r.id===sel.id?'sel':'')+'" onclick="pick(\''+r.id+'\')">'+
+      '<div class="ic">'+r.ic+'</div><div><div class="nm">'+r.nm+'</div><div class="eta">'+r.eta+'</div></div>'+
+      '<div class="pr">'+money(r.price)+'</div><div class="chk">✓</div></div>';
+  }).join('');
+  document.getElementById('homeCta').textContent='Confirm '+sel.nm;
+  document.getElementById('homePrice').textContent=money(sel.price);
+}
+function pick(id){ sel = RIDES.find(function(r){return r.id===id}); renderRides(); }
+function setDest(v){ document.getElementById('dest').value = v; }
+function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')}); document.getElementById(id).classList.add('on'); }
+function goConfirm(){
+  var d = document.getElementById('dest').value || 'Downtown Miami';
+  document.getElementById('dropoff').textContent = d;
+  document.getElementById('confirmPrice').textContent = money(sel.price);
+  document.getElementById('payPrice').textContent = money(sel.price);
+  show('s-confirm');
+}
+async function payRide(){
+  var btn = document.getElementById('payBtn'); btn.textContent='Connecting…';
+  try{
+    var r = await fetch(BACKEND+'/api/pay/checkout',{method:'POST',headers:{'content-type':'application/json'},
+      body: JSON.stringify({ amountCents: Math.round(sel.price*100), label:'Moveo '+sel.nm+' ride',
+        successUrl: location.href.split('?')[0]+'?paid=1', cancelUrl: location.href.split('?')[0] })});
+    var d = await r.json();
+    if(d.url){ location.href = d.url; return; }   // real Stripe checkout
+    throw new Error(d.error||'failed');
+  }catch(e){
+    // fallback to demo flow if backend is waking up
+    btn.textContent='Confirm & Pay'; show('s-route');
+  }
+}
+function finishRide(){ document.getElementById('paidLine').textContent = money(sel.price)+' · '+sel.nm; show('s-done'); }
+// if returning from a successful Stripe payment
+if(new URLSearchParams(location.search).get('paid')){ document.getElementById('paidLine').textContent='Payment complete ✓'; show('s-route'); }
+renderRides();
+</script>
+</body>
+</html>
