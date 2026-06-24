@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Moveo — Move better. Together.</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{--v:#6c4dff;--v2:#8a6dff;--vl:#f1eeff;--ink:#15171e;--mute:#8b91a3;--line:#eef0f5;--bg:#f6f7fb;--green:#27c498;--red:#ff5a5f}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -68,6 +70,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
 .stars{font-size:30px;color:#f0a500;letter-spacing:6px}
 .done{width:90px;height:90px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-size:46px;color:#fff;margin-bottom:6px}
 .back{position:absolute;top:54px;left:18px;width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:18px;z-index:30;cursor:pointer}
+.acwrap{position:relative}
+.suggest{position:absolute;left:0;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 30px rgba(20,23,30,.12);z-index:40;overflow:hidden;display:none}
+.suggest.on{display:block}
+.suggest .row{display:flex;gap:10px;align-items:center;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line)}
+.suggest .row:last-child{border:0}.suggest .row:active{background:var(--vl)}
+.suggest .row .pin{color:var(--v)}.suggest .row .nm{font-size:14px;font-weight:600}.suggest .row .sub{font-size:12px;color:var(--mute)}
+#map{height:100%;width:100%}
+.leaflet-control-attribution{font-size:8px!important}
 </style>
 </head>
 <body>
@@ -80,7 +90,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
     <div class="body">
       <div class="logo"><span class="m">M</span>Moveo</div>
       <div class="hi">Hello, Alex 👋<small>Where are you going?</small></div>
-      <div class="search"><span class="pin">◎</span><input id="dest" placeholder="Enter destination" value=""></div>
+      <div class="acwrap">
+        <div class="search"><span class="pin">◎</span><input id="dest" placeholder="Enter destination" autocomplete="off" oninput="onType()"></div>
+        <div class="suggest" id="suggest"></div>
+      </div>
       <div class="quick">
         <div class="q" onclick="setDest('Home')"><div class="i">🏠</div><div class="t">Home</div><div class="s">12 min</div></div>
         <div class="q" onclick="setDest('Work')"><div class="i">💼</div><div class="t">Work</div><div class="s">25 min</div></div>
@@ -99,14 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
   <section class="screen" id="s-confirm">
     <div class="back" onclick="show('s-home')">‹</div>
     <div class="statusbar"><span>9:41</span><span>● ▮▮▮ 🔋</span></div>
-    <div class="map">
-      <svg viewBox="0 0 390 460" preserveAspectRatio="none">
-        <path class="route" d="M70 290 C 140 250, 180 160, 215 140 S 300 120, 320 90"/>
-      </svg>
-      <span class="pin1" style="left:60px;top:268px">📍</span>
-      <span class="pin2" style="left:308px;top:66px">🏁</span>
-      <span class="car">🚗</span>
-    </div>
+    <div class="map"><div id="map"></div></div>
     <div class="card">
       <div class="locrow"><div class="d" style="background:var(--v)"></div><div><div class="lbl">PICKUP</div><div class="val">120 Maple St, Miami</div></div></div>
       <div class="locrow"><div class="d" style="background:var(--red)"></div><div><div class="lbl">DROP-OFF</div><div class="val" id="dropoff">456 Ocean Dr, Miami</div></div></div>
@@ -170,14 +176,72 @@ function renderRides(){
   document.getElementById('homePrice').textContent=money(sel.price);
 }
 function pick(id){ sel = RIDES.find(function(r){return r.id===id}); renderRides(); }
-function setDest(v){ document.getElementById('dest').value = v; }
+function setDest(v){ document.getElementById('dest').value = v; chosen=null; }
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')}); document.getElementById(id).classList.add('on'); }
+
+/* ---- real address autocomplete (Photon — free, no key) ---- */
+var chosen = null;          // {label, lat, lon}
+var pickup = {lat:25.7907, lon:-80.1300, label:'Current location'};  // Miami default until geolocation resolves
+var acTimer;
+function onType(){
+  clearTimeout(acTimer);
+  var q = document.getElementById('dest').value.trim();
+  chosen = null;
+  if(q.length < 3){ document.getElementById('suggest').classList.remove('on'); return; }
+  acTimer = setTimeout(function(){
+    fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=5&lat='+pickup.lat+'&lon='+pickup.lon)
+      .then(function(r){return r.json()}).then(function(d){
+        var box = document.getElementById('suggest');
+        var rows = (d.features||[]).map(function(f){
+          var p=f.properties||{}, c=f.geometry.coordinates;
+          var name=[p.name,p.housenumber&&p.street?(p.housenumber+' '+p.street):p.street].filter(Boolean)[0]||p.name||'Location';
+          var sub=[p.city,p.state,p.country].filter(Boolean).join(', ');
+          return '<div class="row" onclick="pickSuggestion('+c[1]+','+c[0]+',\''+(name+(sub?', '+sub:'')).replace(/'/g,'')+'\')">'+
+            '<span class="pin">📍</span><div><div class="nm">'+name+'</div><div class="sub">'+sub+'</div></div></div>';
+        }).join('');
+        box.innerHTML = rows; box.classList.toggle('on', !!rows);
+      }).catch(function(){});
+  }, 250);
+}
+function pickSuggestion(lat, lon, label){
+  chosen = {lat:lat, lon:lon, label:label};
+  document.getElementById('dest').value = label;
+  document.getElementById('suggest').classList.remove('on');
+}
+
+/* ---- live map (Leaflet + OpenStreetMap) ---- */
+var map, line, mPick, mDrop;
+function getPickup(cb){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(p){
+      pickup={lat:p.coords.latitude, lon:p.coords.longitude, label:'Current location'}; cb();
+    }, function(){ cb(); }, {timeout:4000});
+  } else cb();
+}
 function goConfirm(){
-  var d = document.getElementById('dest').value || 'Downtown Miami';
-  document.getElementById('dropoff').textContent = d;
   document.getElementById('confirmPrice').textContent = money(sel.price);
   document.getElementById('payPrice').textContent = money(sel.price);
+  // destination: chosen suggestion, or fall back to a Miami point
+  var drop = chosen || {lat:25.7617, lon:-80.1918, label:(document.getElementById('dest').value||'Downtown Miami')};
+  document.getElementById('dropoff').textContent = drop.label;
   show('s-confirm');
+  getPickup(function(){ drawMap(pickup, drop); });
+}
+function drawMap(a, b){
+  setTimeout(function(){
+    if(!map){
+      map = L.map('map',{zoomControl:false,attributionControl:true}).setView([a.lat,a.lon],13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OSM, CARTO'}).addTo(map);
+    }
+    var pinA = L.divIcon({html:'<div style="font-size:26px">📍</div>',className:'',iconSize:[26,26],iconAnchor:[13,26]});
+    var pinB = L.divIcon({html:'<div style="font-size:26px">🏁</div>',className:'',iconSize:[26,26],iconAnchor:[13,26]});
+    if(mPick) map.removeLayer(mPick); if(mDrop) map.removeLayer(mDrop); if(line) map.removeLayer(line);
+    mPick = L.marker([a.lat,a.lon],{icon:pinA}).addTo(map);
+    mDrop = L.marker([b.lat,b.lon],{icon:pinB}).addTo(map);
+    line = L.polyline([[a.lat,a.lon],[b.lat,b.lon]],{color:'#6c4dff',weight:5,opacity:.85,dashArray:'2 9'}).addTo(map);
+    map.fitBounds(line.getBounds(),{padding:[50,50]});
+    setTimeout(function(){map.invalidateSize()},150);
+  },120);
 }
 async function payRide(){
   var btn = document.getElementById('payBtn'); btn.textContent='Connecting…';
